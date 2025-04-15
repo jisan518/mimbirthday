@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Gallery | Password Protected</title>
+    <script>
+        document.addEventListener("contextmenu", function(event){
+            event.preventDefault();
+        });
+        
+        document.addEventListener("keydown", function(event) {
+            if (event.ctrlKey && (event.key === "U" || event.key === "I" || event.key === "J" || event.key === "S" || event.key === "H")) {
+                event.preventDefault();
+            }
+        });
+        </script>
+    <style>
+        /* Base styles and reset */-
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0f0f1a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Login container styling */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: transform 0.8s cubic-bezier(0.86, 0, 0.07, 1);
+        }
+        
+        .login-container.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.03),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 6s infinite;
+        }
+        
+        @keyframes shine {
+            0% {
+                top: -50%;
+                left: -50%;
+            }
+            100% {
+                top: 150%;
+                left: 150%;
+            }
+        }
+        
+        .login-title {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+        }
+        
+        .login-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #a05eff);
+        }
+        
+        .password-form {
+            position: relative;
+            margin-top: 30px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            color: #fff;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .password-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .submit-btn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ff6b6b, #a05eff);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(45deg, #a05eff, #ff6b6b);
+            transition: all 0.5s;
+            z-index: -1;
+        }
+        
+        .submit-btn:hover::before {
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .error-msg {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 15px;
+            display: none;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        
+        /* Gallery styling */
+        .gallery-container {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .gallery-title {
+            font-size: 36px;
+            background: linear-gradient(45deg, #ff6b6b, #a05eff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+        }
+        
+        .logout-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease-out;
+        }
+        
+        .gallery-grid.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            height: 300px;
+            transition: all 0.4s;
+            transform-origin: center;
+            cursor: pointer;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s;
+        }
+        
+        .gallery-item:hover .gallery-img {
+            transform: scale(1.1);
+        }
+        
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+        
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .gallery-caption {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* Modal styling */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-img {
+            display: block;
+            max-width: 100%;
+            max-height: 80vh;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+        
+        .modal-close::before,
+        .modal-close::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: white;
+        }
+        
+        .modal-close::before {
+            transform: rotate(45deg);
+        }
+        
+        .modal-close::after {
+            transform: rotate(-45deg);
+        }
+        
+        .modal-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            padding: 20px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        /* Loader styling */
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #a05eff;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 15px;
+            }
+            
+            .gallery-item {
+                height: 300px;
+            
+            }
+            
+            .gallery-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .login-box {
+                padding: 30px;
+            }
+            
+            .modal-content {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Password protection login screen -->
+    <div class="login-container">
+        <div class="login-box">
+            <h1 class="login-title">Secret Gallery</h1>
+            <p>Enter the password to access the exclusive content</p>
+            <form class="password-form" id="passwordForm">
+                <input type="password" class="password-input" id="passwordInput" placeholder="Enter password" required>
+                <button type="submit" class="submit-btn">Unlock Gallery</button>
+                <div class="loader" id="loginLoader"></div>
+                <p class="error-msg" id="errorMsg">Incorrect password. Please try again.</p>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Gallery container -->
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h1 class="gallery-title">Exclusive Collection</h1>
+            <button class="logout-btn" id="logoutBtn">Lock Gallery</button>
+        </div>
+        
+        <div class="gallery-grid" id="galleryGrid">
+            <!-- Gallery items will be loaded dynamically -->
+        </div>
+    </div>
+    
+    <!-- Modal for enlarged images -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <img src="" alt="" class="modal-img" id="modalImg">
+            <div class="modal-close" id="modalClose"></div>
+            <div class="modal-caption" id="modalCaption"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Password verification and gallery management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const loginContainer = document.querySelector('.login-container');
+            const passwordForm = document.getElementById('passwordForm');
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMsg = document.getElementById('errorMsg');
+            const loginLoader = document.getElementById('loginLoader');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const galleryGrid = document.getElementById('galleryGrid');
+            const imageModal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            const modalClose = document.getElementById('modalClose');
+            const modalCaption = document.getElementById('modalCaption');
+            
+            // Set password (in a real application, this would be server-side)
+            const correctPassword = 'gallery2025';
+            
+            // Check if user is already logged in
+            const isLoggedIn = sessionStorage.getItem('galleryAuthenticated') === 'true';
+            
+            if (isLoggedIn) {
+                unlockGallery();
+            }
+            
+            // Handle password form submission
+            passwordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loader
+                loginLoader.style.display = 'block';
+                
+                // Simulate authentication delay
+                setTimeout(function() {
+                    if (passwordInput.value === correctPassword) {
+                        sessionStorage.setItem('galleryAuthenticated', 'true');
+                        unlockGallery();
+                    } else {
+                        errorMsg.style.display = 'block';
+                        errorMsg.style.animation = 'none';
+                        void errorMsg.offsetWidth; // Trigger reflow
+                        errorMsg.style.animation = 'shake 0.5s';
+                    }
+                    
+                    // Hide loader
+                    loginLoader.style.display = 'none';
+                    
+                    // Clear password input
+                    passwordInput.value = '';
+                }, 1200);
+            });
+            
+            // Handle logout
+            logoutBtn.addEventListener('click', function() {
+                sessionStorage.removeItem('galleryAuthenticated');
+                loginContainer.classList.remove('hidden');
+                galleryGrid.classList.remove('loaded');
+            });
+            
+            // Function to unlock gallery
+            function unlockGallery() {
+                loginContainer.classList.add('hidden');
+                
+                // If gallery is empty, load images
+                if (galleryGrid.children.length === 0) {
+                    loadGalleryImages();
+                }
+                
+                // Show gallery with animation
+                setTimeout(function() {
+                    galleryGrid.classList.add('loaded');
+                }, 300);
+            }
+            
+            // Load gallery images
+            function loadGalleryImages() {
+                // Sample gallery data (in a real application, this would come from a server)
+                const galleryData = [
+                    { src: "ash.jpg", caption: "Abstract Geometry" },
+                    { src: "ash1.jpg", caption: "Urban Landscape" },
+                    { src: "ash2.jpg", caption: "Digital Dreamscape" },
+                    { src: "ash3.jpg", caption: "Futuristic Architecture" },
+                    { src: "ash4.jpg", caption: "Neon Reflections" },
+                    { src: "ash5.jpg", caption: "Vibrant Expressions" },
+                    { src: "ash6.jpg", caption: "Natural Harmony" },
+                    { src: "ash7.jpg", caption: "Surreal Vision" },
+                    { src: "ash8.jpg", caption: "Creative Revolution" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" },
+                    { src: "ash8.jpg", caption: "Ashraful" }
+
+
+
+
+
+                ];
+                
+                // Create gallery items
+                galleryData.forEach(item => {
+                    const galleryItem = document.createElement('div');
+                    galleryItem.className = 'gallery-item';
+                    
+                    galleryItem.innerHTML = `
+                        <img src="${item.src}" alt="${item.caption}" class="gallery-img">
+                        <div class="gallery-overlay">
+                            <div class="gallery-caption">${item.caption}</div>
+                        </div>
+                    `;
+                    
+                    // Add click event to open modal
+                    galleryItem.addEventListener('click', function() {
+                        openImageModal(item.src, item.caption);
+                    });
+                    
+                    galleryGrid.appendChild(galleryItem);
+                });
+            }
+            
+            // Open image modal
+            function openImageModal(src, caption) {
+                modalImg.src = src;
+                modalCaption.textContent = caption;
+                imageModal.classList.add('active');
+                
+                // Prevent body scrolling
+                document.body.style.overflow = 'hidden';
+            }
+            
+            // Close image modal
+            modalClose.addEventListener('click', closeImageModal);
+            imageModal.addEventListener('click', function(e) {
+                if (e.target === imageModal) {
+                    closeImageModal();
+                }
+            });
+            
+            function closeImageModal() {
+                imageModal.classList.remove('active');
+                
+                // Restore body scrolling
+                document.body.style.overflow = '';
+            }
+            
+            // Listen for escape key to close modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+                    closeImageModal();
+                }
+            });
+        });
+    </script>
+
+    
+</body>
+</html>

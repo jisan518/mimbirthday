@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akta Search Library</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .search-section {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            padding-left: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #95a5a6;
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e0e5e7;
+        }
+        
+        .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .results-section {
+            padding: 20px;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background-color: #e0e5e7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .result-content {
+            flex-grow: 1;
+        }
+        
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .result-description {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .result-meta {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+        
+        .result-meta span {
+            margin-right: 15px;
+        }
+        
+        .highlight {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #2980b9;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 5px;
+        }
+        
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .page-btn:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .page-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 50px 0;
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px 0;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(52, 152, 219, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .search-input {
+                padding: 12px 12px 12px 40px;
+                font-size: 0.9rem;
+            }
+            
+            .search-icon {
+                left: 15px;
+            }
+            
+            .result-card {
+                flex-direction: column;
+            }
+            
+            .result-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Akta Search Library</h1>
+            <p>Find and explore code snippets, libraries, and resources</p>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-box">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="search-input" placeholder="Search for libraries, snippets, code examples..." id="searchInput">
+            </div>
+            
+            <div class="filter-options">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="javascript">JavaScript</button>
+                <button class="filter-btn" data-filter="html">HTML</button>
+                <button class="filter-btn" data-filter="css">CSS</button>
+                <button class="filter-btn" data-filter="react">React</button>
+                <button class="filter-btn" data-filter="node">Node.js</button>
+            </div>
+        </div>
+        
+        <div class="results-section" id="resultsContainer">
+            <!-- Results will be populated here -->
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be populated here -->
+        </div>
+    </div>
+    
+    <script>
+        // Sample library data
+        const libraryData = [
+            {
+                id: 1,
+                title: "React.js",
+                description: "A JavaScript library for building user interfaces with a component-based architecture.",
+                category: "javascript react",
+                icon: "R",
+                author: "Facebook",
+                stars: 189000,
+                updated: "2 days ago"
+            },
+            {
+                id: 2,
+                title: "Bootstrap",
+                description: "A popular CSS framework for developing responsive and mobile-first websites.",
+                category: "css html",
+                icon: "B",
+                author: "Twitter",
+                stars: 156000,
+                updated: "1 week ago"
+            },
+            {
+                id: 3,
+                title: "Express.js",
+                description: "Fast, unopinionated, minimalist web framework for Node.js applications.",
+                category: "javascript node",
+                icon: "E",
+                author: "TJ Holowaychuk",
+                stars: 58000,
+                updated: "3 days ago"
+            },
+            {
+                id: 4,
+                title: "Tailwind CSS",
+                description: "A utility-first CSS framework for rapidly building custom user interfaces.",
+                category: "css",
+                icon: "T",
+                author: "Adam Wathan",
+                stars: 62000,
+                updated: "5 days ago"
+            },
+            {
+                id: 5,
+                title: "Vue.js",
+                description: "Progressive JavaScript framework for building user interfaces and single-page applications.",
+                category: "javascript",
+                icon: "V",
+                author: "Evan You",
+                stars: 196000,
+                updated: "1 day ago"
+            },
+            {
+                id: 6,
+                title: "Angular",
+                description: "Platform for building mobile and desktop web applications using TypeScript/JavaScript.",
+                category: "javascript",
+                icon: "A",
+                author: "Google",
+                stars: 83000,
+                updated: "4 days ago"
+            },
+            {
+                id: 7,
+                title: "Lodash",
+                description: "A modern JavaScript utility library delivering modularity, performance & extras.",
+                category: "javascript",
+                icon: "L",
+                author: "John-David Dalton",
+                stars: 52000,
+                updated: "2 weeks ago"
+            },
+            {
+                id: 8,
+                title: "SASS",
+                description: "CSS preprocessor scripting language that is interpreted or compiled into Cascading Style Sheets.",
+                category: "css",
+                icon: "S",
+                author: "Hampton Catlin",
+                stars: 14000,
+                updated: "1 month ago"
+            },
+            {
+                id: 9,
+                title: "Next.js",
+                description: "React framework for production that gives you the best developer experience.",
+                category: "javascript react",
+                icon: "N",
+                author: "Vercel",
+                stars: 86000,
+                updated: "3 days ago"
+            },
+            {
+                id: 10,
+                title: "Three.js",
+                description: "JavaScript 3D library that makes WebGL simpler to use.",
+                category: "javascript",
+                icon: "T",
+                author: "Ricardo Cabello",
+                stars: 84000,
+                updated: "1 week ago"
+            },
+            {
+                id: 11,
+                title: "Font Awesome",
+                description: "Vector icons and social logos for your website.",
+                category: "css html",
+                icon: "F",
+                author: "Dave Gandy",
+                stars: 69000,
+                updated: "2 weeks ago"
+            },
+            {
+                id: 12,
+                title: "Mongoose",
+                description: "MongoDB object modeling designed to work in an asynchronous environment.",
+                category: "javascript node",
+                icon: "M",
+                author: "Automattic",
+                stars: 25000,
+                updated: "5 days ago"
+            }
+        ];
+        
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const paginationContainer = document.getElementById('pagination');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        
+        // State
+        let currentFilter = 'all';
+        let currentSearchQuery = '';
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        
+        // Init
+        renderResults();
+        
+        // Event Listeners
+        searchInput.addEventListener('input', function() {
+            currentSearchQuery = this.value.toLowerCase();
+            currentPage = 1;
+            renderResults();
+        });
+        
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterButtons.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update filter
+                currentFilter = this.dataset.filter;
+                currentPage = 1;
+                renderResults();
+            });
+        });
+       
+        // Functions
+        function renderResults() {
+            // Filter and search
+            let filteredData = libraryData.filter(item => {
+                // Filter by category
+                const categoryMatch = currentFilter === 'all' || item.category.includes(currentFilter);
+                
+                // Filter by search query
+                const searchMatch = currentSearchQuery === '' || 
+                                   item.title.toLowerCase().includes(currentSearchQuery) || 
+                                   item.description.toLowerCase().includes(currentSearchQuery);
+                
+                return categoryMatch && searchMatch;
+            });
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedData = filteredData.slice(startIndex, endIndex);
+            
+            // Render results
+            if (filteredData.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#95a5a6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <h3>No results found</h3>
+                        <p>Try adjusting your search or filter to find what you're looking for</p>
+                    </div>
+                `;
+            } else {
+                resultsContainer.innerHTML = '';
+                
+                // Show brief loading animation
+                showLoading();
+                
+                setTimeout(() => {
+                    renderItems(paginatedData);
+                    renderPagination(totalPages);
+                }, 300);
+            }
+        }
+        
+        function showLoading() {
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading results...</p>
+                </div>
+            `;
+        }
+        
+        function renderItems(items) {
+            resultsContainer.innerHTML = '';
+            
+            items.forEach(item => {
+                // Highlight search terms in title and description
+                let title = item.title;
+                let description = item.description;
+                
+                if (currentSearchQuery) {
+                    const regex = new RegExp(`(${currentSearchQuery})`, 'gi');
+                    title = title.replace(regex, '<span class="highlight">$1</span>');
+                    description = description.replace(regex, '<span class="highlight">$1</span>');
+                }
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'result-card';
+                itemElement.innerHTML = `
+                    <div class="result-icon">${item.icon}</div>
+                    <div class="result-content">
+                        <h3 class="result-title">${title}</h3>
+                        <p class="result-description">${description}</p>
+                        <div class="result-meta">
+                            <span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                ${item.author}
+                            </span>
+                            <span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                ${item.stars.toLocaleString()}
+                            </span>
+                            <span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                ${item.updated}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                // Add click event
+                itemElement.addEventListener('click', () => {
+                    // This would typically open a details page or modal
+                    alert(`You selected ${item.title}`);
+                });
+                
+                resultsContainer.appendChild(itemElement);
+            });
+        }
+        
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            paginationContainer.innerHTML = '';
+            
+            // Previous button
+            if (currentPage > 1) {
+                const prevBtn = createPageButton('«', currentPage - 1);
+                paginationContainer.appendChild(prevBtn);
+            }
+            
+            // Page buttons
+            for (let i = 1; i <= totalPages; i++) {
+                // Only show a window of pages around current page
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageBtn = createPageButton(i, i, i === currentPage);
+                    paginationContainer.appendChild(pageBtn);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    // Add ellipsis
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'page-btn';
+                    ellipsis.textContent = '...';
+                    paginationContainer.appendChild(ellipsis);
+                }
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                const nextBtn = createPageButton('»', currentPage + 1);
+                paginationContainer.appendChild(nextBtn);
+            }
+        }
+        
+        function createPageButton(text, pageNumber, isActive = false) {
+            const button = document.createElement('button');
+            button.className = `page-btn ${isActive ? 'active' : ''}`;
+            button.textContent = text;
+            
+            button.addEventListener('click', () => {
+                currentPage = pageNumber;
+                renderResults();
+                window.scrollTo({
+                    top: document.querySelector('.search-section').offsetTop,
+                    behavior: 'smooth'
+                });
+            });
+            
+            return button;
+        }
+    </script>
+</body>
+</html>
